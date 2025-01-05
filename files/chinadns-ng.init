@@ -71,6 +71,11 @@ is_exist_ipset() {
 }
 
 destroy_ipset() {
+	nftset=$(echo "$1" | tr @ ' ')
+	if [ "$1" != "$nftset" ]; then
+		nft flush set $nftset
+		return 0
+	fi
 	ipset flush "$1" 2>/dev/null
 	ipset destroy "$1" 2>/dev/null
 }
@@ -88,6 +93,19 @@ create_ipv4_ipset() {
 	local ipset_name
 	config_get ipset_name "$1" "ipset_name4" "chnroute"
 
+	local nftset=$(echo "$ipset_name" | tr @ ' ')
+	if [ "$nftset" != "$ipset_name" ]; then
+		nft flush set $nftset || nft add set $nftset \
+			{ type ipv4_addr \; flags interval \; }
+		nft -f - <<-EOF
+			define addrs = {
+			$(sed 's/$/,/' </etc/chinadns-ng/chnroute.txt)
+			}
+			add element $nftset \$addrs
+		EOF
+		return 0
+	fi
+
 	if is_exist_ipset "$ipset_name"; then
 		ipset flush "$ipset_name"
 	else
@@ -102,6 +120,19 @@ create_ipv4_ipset() {
 create_ipv6_ipset() {
 	local ipset_name
 	config_get ipset_name "$1" "ipset_name6" "chnroute6"
+
+	local nftset=$(echo "$ipset_name" | tr @ ' ')
+	if [ "$nftset" != "$ipset_name" ]; then
+		nft flush set $nftset || nft add set $nftset \
+			{ type ipv6_addr \; flags interval \; }
+		nft -f - <<-EOF
+			define addrs = {
+			$(sed 's/$/,/' </etc/chinadns-ng/chnroute6.txt)
+			}
+			add element $nftset \$addrs
+		EOF
+		return 0
+	fi
 
 	if is_exist_ipset "$ipset_name"; then
 		ipset flush "$ipset_name"

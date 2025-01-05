@@ -8,6 +8,8 @@
 
 从 OpenWrt 的 [SDK](https://openwrt.org/docs/guide-developer/obtain.firmware.sdk) 编译
 ```bash
+# 安装zig 0.10.1, 使zig在PATH中
+
 cd openwrt-sdk
 
 # 获取源码
